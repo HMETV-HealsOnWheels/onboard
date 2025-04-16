@@ -2,6 +2,9 @@
 
 // Motor command definitions
 #define FORWARD 'f'
+#define BACKWARD 'b'
+#define LEFT 'l'
+#define RIGHT 'r'
 #define STOP 's'
 
 #define DELAY 10
@@ -45,12 +48,13 @@ void loop() {
     incoming_data.remove(0, 1);
     int t_delay = incoming_data.toInt();
 
-    if (t_command == FORWARD) {
-      currentCommand = FORWARD;
+    if (t_command == FORWARD || t_command == BACKWARD || t_command == LEFT || t_command == RIGHT) {
+      currentCommand = t_command;
       cruiseDuration = t_delay;
       curSpeed = NEUTRAL_SPEED;
       phase = ACCELERATE;
-      Serial.println("FORWARD command received");
+      Serial.print("Command received: ");
+      Serial.println(t_command);
     }
     else if (t_command == STOP) {
       currentCommand = '\0';
@@ -60,48 +64,64 @@ void loop() {
     }
   }
 
-  // Handle movement logic
-  if (currentCommand == FORWARD) {
-    switch (phase) {
-      case ACCELERATE:
-        if (curSpeed < MAX_SPEED) {
-          curSpeed += ACCEL_STEP;
-          if (curSpeed >= MAX_SPEED) {
-            curSpeed = MAX_SPEED;
-            phase = CRUISE;
-            cruiseStartTime = millis();  // Start cruise timer *after* acceleration
-            Serial.println("Reached max speed, starting cruise");
-          }
-          setAllMotors(curSpeed);
-          delay(DELAY);
-        }
-        break;
+  // Handle movement logic for all directions
+  switch (currentCommand) {
+    case FORWARD:
+      handleMotion(setForwardMotors);
+      break;
+    case BACKWARD:
+      handleMotion(setBackwardMotors);
+      break;
+    case LEFT:
+      handleMotion(setLeftMotors);
+      break;
+    case RIGHT:
+      handleMotion(setRightMotors);
+      break;
+  }
+}
 
-      case CRUISE:
-        setAllMotors(MAX_SPEED);
-        if (millis() - cruiseStartTime >= cruiseDuration) {
-          phase = DECELERATE;
-          Serial.println("Cruise complete, starting deceleration");
+// Unified movement handler
+void handleMotion(void (*setMotors)(int)) {
+  switch (phase) {
+    case ACCELERATE:
+      if (curSpeed < MAX_SPEED) {
+        curSpeed += ACCEL_STEP;
+        if (curSpeed >= MAX_SPEED) {
+          curSpeed = MAX_SPEED;
+          phase = CRUISE;
+          cruiseStartTime = millis();
+          Serial.println("Reached max speed, starting cruise");
         }
-        break;
+        setMotors(curSpeed);
+        delay(DELAY);
+      }
+      break;
 
-      case DECELERATE:
-        if (curSpeed > NEUTRAL_SPEED) {
-          curSpeed -= DECEL_STEP;
-          if (curSpeed <= NEUTRAL_SPEED) {
-            curSpeed = NEUTRAL_SPEED;
-            phase = IDLE;
-            currentCommand = '\0';
-            Serial.println("Deceleration complete");
-          }
-          setAllMotors(curSpeed);
-          delay(DELAY);
+    case CRUISE:
+      setMotors(MAX_SPEED);
+      if (millis() - cruiseStartTime >= cruiseDuration) {
+        phase = DECELERATE;
+        Serial.println("Cruise complete, starting deceleration");
+      }
+      break;
+
+    case DECELERATE:
+      if (curSpeed > NEUTRAL_SPEED) {
+        curSpeed -= DECEL_STEP;
+        if (curSpeed <= NEUTRAL_SPEED) {
+          curSpeed = NEUTRAL_SPEED;
+          phase = IDLE;
+          currentCommand = '\0';
+          Serial.println("Deceleration complete");
         }
-        break;
+        setMotors(curSpeed);
+        delay(DELAY);
+      }
+      break;
 
-      default:
-        break;
-    }
+    default:
+      break;
   }
 }
 
@@ -114,4 +134,30 @@ void setAllMotors(int pwm) {
   FrontRightMotor.writeMicroseconds(pwm);
   BackLeftMotor.writeMicroseconds(pwm);
   BackRightMotor.writeMicroseconds(pwm);
+}
+
+// Directional motor controls
+void setForwardMotors(int pwm) {
+  setAllMotors(pwm);
+}
+
+void setBackwardMotors(int pwm) {
+  FrontLeftMotor.writeMicroseconds(NEUTRAL_SPEED - (pwm - NEUTRAL_SPEED));
+  FrontRightMotor.writeMicroseconds(NEUTRAL_SPEED - (pwm - NEUTRAL_SPEED));
+  BackLeftMotor.writeMicroseconds(NEUTRAL_SPEED - (pwm - NEUTRAL_SPEED));
+  BackRightMotor.writeMicroseconds(NEUTRAL_SPEED - (pwm - NEUTRAL_SPEED));
+}
+
+void setRightMotors(int pwm) {
+  FrontLeftMotor.writeMicroseconds(NEUTRAL_SPEED - (pwm - NEUTRAL_SPEED));  // reverse
+  FrontRightMotor.writeMicroseconds(pwm);                                   // forward
+  BackLeftMotor.writeMicroseconds(pwm);                                     // forward
+  BackRightMotor.writeMicroseconds(NEUTRAL_SPEED - (pwm - NEUTRAL_SPEED));  // reverse
+}
+
+void setLeftMotors(int pwm) {
+  FrontLeftMotor.writeMicroseconds(pwm);                                    // forward
+  FrontRightMotor.writeMicroseconds(NEUTRAL_SPEED - (pwm - NEUTRAL_SPEED)); // reverse
+  BackLeftMotor.writeMicroseconds(NEUTRAL_SPEED - (pwm - NEUTRAL_SPEED));   // reverse
+  BackRightMotor.writeMicroseconds(pwm);                                    // forward
 }
