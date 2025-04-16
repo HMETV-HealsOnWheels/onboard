@@ -77,22 +77,19 @@ def run():
         print("NO PATH LOADED")
         return
 
-    for t_command in path:
-        command, duration = t_command
-
+    for command, duration in path:
         if print_mode:
-            print(command)
+            print(f"Running: {command}, {duration}")
         else:
             send_to_arduino(COMMAND_MAP[command], duration)
 
-        time.sleep((duration + 500) / 1000.0)
+        # Let Arduino handle the cruise time
+        if command != "emergency-stop" and command != "stop":
+            time.sleep((duration + 500) / 1000.0)
 
     print("Path complete!")
-    if not print_mode:
-        #send_to_arduino(COMMAND_MAP["stop"])
-        stop_cmd = COMMAND_MAP.get("emergency-stop", 's')
-        send_to_arduino(stop_cmd)
     path.clear()
+
 
 # Server loop
 print(f"[✓] Server listening on {TCP_IP}:{TCP_PORT}...")
@@ -130,4 +127,3 @@ while Scanning:
 
     except Exception as e:
         print(f"[X] Server error: {e}")
- 
