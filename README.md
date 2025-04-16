@@ -14,13 +14,13 @@ This repository contains the **onboard software and firmware** for the Heals on 
 
 ## Getting Started
 
-### 🔧 Hardware Setup
+### Hardware Setup
 
 - Arduino Mega connected to motor controllers and servo motors.
 - Raspberry Pi connected to the Arduino via USB (e.g., `/dev/ttyACM0`).
 - Raspberry Pi connected to hospital’s secure network (**Skynet WiFi**).
 
-### 📡 Network Setup
+### Network Setup
 
 - Ensure you are connected to **Skynet WiFi**.
 - The Raspberry Pi’s IP address may change, so use an **IP scanner** (e.g., [Advanced IP Scanner](https://www.advanced-ip-scanner.com/)) to find it.
