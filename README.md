@@ -26,7 +26,7 @@ This repository contains the **onboard software and firmware** for the Heals on 
 - The Raspberry Pi’s IP address may change, so use an **IP scanner** (e.g., [Advanced IP Scanner](https://www.advanced-ip-scanner.com/)) to find it.
 - Typical IP format: `192.168.1.xx`
 
-## 🧠 Uploading Code to Arduino (from Raspberry Pi)
+## Uploading Code to Arduino (from Raspberry Pi)
 ### 1. SSH into your Raspberry Pi:
 ```bash
 ssh hmetv@<raspberry-pi-ip>
